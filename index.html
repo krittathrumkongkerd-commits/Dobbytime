@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ด็อบบี้ หมีขั้วโลกวิศวกรไฟฟ้า · นับเวลาเลิกงาน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ice-bg-top:#EAF6FB;
+    --ice-bg-bottom:#FFFFFF;
+    --card-white:#FFFFFF;
+    --card-blue-tint:#F1FAFD;
+    --ice-blue:#BFE6F2;
+    --ice-blue-deep:#8FCFE3;
+    --orange:#FF9F40;
+    --orange-soft:#FFD9A8;
+    --orange-text:#C96A1F;
+    --charcoal:#3A4750;
+    --charcoal-soft:#8AA0A8;
+    --leave-blue:#5E92B5;
+    --leave-blue-soft:#E4EFF6;
+    --holiday-green:#5FB58A;
+    --holiday-green-soft:#E2F4EC;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; min-height:100vh; position:relative;
+    background:radial-gradient(circle at 50% -10%, var(--ice-bg-top) 0%, var(--ice-bg-bottom) 55%);
+    font-family:'Kanit', sans-serif; color:var(--charcoal);
+    display:flex; align-items:center; justify-content:center;
+    padding:30px 20px; overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0;
+    background-image:radial-gradient(circle, var(--ice-blue) 1.4px, transparent 1.6px);
+    background-size:26px 26px; opacity:0.4; pointer-events:none; z-index:0;
+  }
+  .snowfall{ position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  .flake{ position:absolute; top:-8%; color:var(--ice-blue-deep); opacity:.55; animation:fall linear infinite; }
+  @keyframes fall{ to{ transform:translateY(120vh); } }
+  @media (prefers-reduced-motion: reduce){ .flake{ animation:none; opacity:.3; } }
+
+  .wrap{ position:relative; z-index:1; width:100%; max-width:440px; margin-top:46px; }
+  .badge{ position:absolute; top:-46px; left:50%; transform:translateX(-50%); width:104px; height:104px; filter:drop-shadow(0 8px 14px rgba(143,207,227,0.55)); z-index:2; }
+  .snow-deco{ position:absolute; font-size:16px; color:var(--ice-blue-deep); opacity:.55; z-index:2; }
+  .snow-deco.s1{ top:18px; left:14px; font-size:13px; }
+  .snow-deco.s2{ top:30px; right:18px; font-size:16px; }
+  .snow-deco.s3{ bottom:20px; left:22px; font-size:11px; }
+
+  .card{
+    position:relative;
+    background:linear-gradient(180deg, var(--card-white) 0%, var(--card-blue-tint) 100%);
+    border:2px solid var(--ice-blue); border-radius:36px 36px 22px 22px;
+    box-shadow:0 26px 50px -22px rgba(143,207,227,0.55), 0 1px 0 rgba(255,255,255,0.7) inset;
+    overflow:hidden; padding:54px 26px 26px;
+  }
+
+  .eyebrow{ font-size:11.5px; font-weight:500; letter-spacing:.04em; color:var(--charcoal-soft); text-align:center; margin:0 0 4px; }
+  .date-line{ text-align:center; font-size:13px; font-weight:500; color:var(--charcoal); margin:0 0 14px; }
+
+  .meter{ display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .meter-text{ font-size:11px; color:var(--charcoal-soft); }
+  .meter-box{ background:var(--card-blue-tint); border:2px solid var(--ice-blue); border-radius:10px; padding:3px 10px; font-family:'Kanit', sans-serif; font-weight:700; font-size:14px; color:var(--charcoal); }
+
+  .cal-open-row{ display:flex; justify-content:center; margin-bottom:18px; }
+  .cal-open-btn{ display:flex; align-items:center; gap:6px; background:var(--card-white); border:2px solid var(--ice-blue); border-radius:18px; padding:6px 16px; font-family:'Kanit', sans-serif; font-weight:500; font-size:12px; color:var(--charcoal); cursor:pointer; }
+
+  .phase-title{ font-family:'Itim', cursive; font-weight:400; text-align:center; font-size:clamp(20px, 5.6vw, 25px); margin:0 0 18px; color:var(--charcoal); transition:color .4s ease; }
+  body.phase-after .phase-title, body.phase-weekend .phase-title, body.phase-leave .phase-title, body.phase-holiday .phase-title{ color:var(--charcoal-soft); }
+
+  .readout{ background:var(--card-blue-tint); border:2px solid var(--ice-blue); border-radius:20px; padding:14px 8px 10px; display:flex; align-items:baseline; justify-content:center; gap:5px; }
+  .seg{ font-family:'Itim', cursive; font-weight:400; font-size:clamp(36px, 12vw, 52px); line-height:1; color:var(--charcoal); min-width:1.1em; text-align:center; }
+  body.phase-working .seg{ text-shadow:0 0 14px rgba(143,207,227,0.85); }
+  body.phase-before .seg, body.phase-after .seg, body.phase-weekend .seg, body.phase-leave .seg, body.phase-holiday .seg{ color:var(--charcoal-soft); }
+  .colon{ font-family:'Itim', cursive; font-size:clamp(36px, 12vw, 52px); color:var(--ice-blue-deep); transform:translateY(-2px); }
+  @media (prefers-reduced-motion: no-preference){ body.phase-working .colon{ animation:blink 1s steps(1) infinite; } }
+  @keyframes blink{ 50%{ opacity:.2; } }
+
+  .unit-labels{ display:flex; justify-content:center; gap:0; font-size:10px; letter-spacing:.06em; color:var(--charcoal-soft); margin-top:6px; }
+  .unit-labels span{ width:64px; text-align:center; }
+  .unit-labels .sp{ width:12px; }
+  .target-line{ text-align:center; font-size:12.5px; color:var(--charcoal-soft); margin-top:13px; }
+
+  .lamp-section{ margin-top:22px; }
+  .lamp-caption{ font-size:10.5px; letter-spacing:.03em; color:var(--charcoal-soft); text-align:center; margin-bottom:9px; }
+  .lamp-row{ display:flex; justify-content:space-between; gap:4px; }
+  .lamp-col{ display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; }
+  .lamp{ position:relative; width:22px; height:22px; border-radius:7px; background:var(--card-blue-tint); border:2px solid var(--ice-blue); overflow:hidden; transition:border-color .3s ease, box-shadow .3s ease; }
+  .lamp.is-active{ border-color:var(--orange); box-shadow:0 0 7px rgba(255,159,64,.55); }
+  .lamp-glow{ position:absolute; left:0; right:0; bottom:0; height:0%; background:linear-gradient(180deg, var(--ice-blue-deep), var(--ice-blue)); transition:height .7s cubic-bezier(.4,0,.2,1); }
+  @media (prefers-reduced-motion: no-preference){ .lamp.is-active{ animation:pulse 1.6s ease-in-out infinite; } }
+  @keyframes pulse{ 50%{ box-shadow:0 0 11px rgba(255,159,64,.8); } }
+  .lamp-num{ font-size:8.5px; color:var(--charcoal-soft); }
+
+  .week-section{ margin-top:18px; padding-top:14px; border-top:1.5px dashed var(--ice-blue); }
+  .week-row{ display:flex; justify-content:center; gap:14px; }
+  .week-col{ display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .week-lamp{ width:14px; height:14px; border-radius:50%; background:var(--card-blue-tint); border:2px solid var(--ice-blue); transition:background .3s ease, border-color .3s ease, box-shadow .3s ease; }
+  .week-lamp.today{ background:var(--orange); border-color:var(--orange); box-shadow:0 0 6px rgba(255,159,64,.6); }
+  body.phase-weekend .week-lamp.today{ background:var(--card-blue-tint); border-color:var(--ice-blue); box-shadow:none; }
+  .week-label{ font-size:9.5px; color:var(--charcoal-soft); }
+  .week-label.today-label{ color:var(--orange-text); }
+
+  .leave-section{ margin-top:18px; padding-top:14px; border-top:1.5px dashed var(--ice-blue); display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .quick-btn-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .quick-btn{ display:flex; align-items:center; gap:7px; background:var(--card-white); border:2px solid var(--ice-blue); border-radius:20px; padding:7px 16px; font-family:'Kanit', sans-serif; font-weight:500; font-size:12.5px; color:var(--charcoal); cursor:pointer; user-select:none; transition:background .25s ease, border-color .25s ease, color .25s ease; }
+  .quick-btn.active-leave{ background:var(--leave-blue-soft); border-color:var(--leave-blue); color:var(--leave-blue); }
+  .quick-btn.active-holiday{ background:var(--holiday-green-soft); border-color:var(--holiday-green); color:var(--holiday-green); }
+  .quick-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .leave-hint{ max-width:300px; text-align:center; font-size:9.5px; line-height:1.5; color:var(--charcoal-soft); margin:0; }
+
+  .status-row{ margin-top:18px; padding-top:14px; border-top:1.5px dashed var(--ice-blue); display:flex; align-items:center; justify-content:space-between; }
+  .switch-group{ display:flex; align-items:center; gap:9px; }
+  .switch{ width:36px; height:18px; border-radius:9px; background:var(--card-blue-tint); border:2px solid var(--ice-blue); position:relative; }
+  .switch .knob{ position:absolute; top:1px; left:1px; width:12px; height:12px; border-radius:50%; background:var(--charcoal-soft); transition:left .3s ease, background .3s ease, box-shadow .3s ease; }
+  .switch.on .knob{ left:19px; background:var(--orange); box-shadow:0 0 6px rgba(255,159,64,.65); }
+  .status-text{ font-size:11.5px; color:var(--charcoal-soft); }
+  .clock{ font-family:'Kanit', sans-serif; font-weight:600; font-size:13px; color:var(--charcoal); }
+
+  .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+  :focus-visible{ outline:2px solid var(--orange-text); outline-offset:3px; }
+
+  .modal-overlay{ position:fixed; inset:0; background:rgba(58,71,80,0.45); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .modal-overlay[hidden]{ display:none; }
+  .modal{ background:var(--card-white); border-radius:24px; border:2px solid var(--ice-blue); padding:20px 18px 18px; width:100%; max-width:340px; box-shadow:0 30px 60px -20px rgba(58,71,80,0.4); }
+  .modal-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .nav-btn{ background:var(--card-blue-tint); border:2px solid var(--ice-blue); border-radius:50%; width:30px; height:30px; font-size:16px; color:var(--charcoal); cursor:pointer; line-height:1; }
+  .modal-title{ font-family:'Kanit', sans-serif; font-weight:600; font-size:14.5px; color:var(--charcoal); }
+  .cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:6px; }
+  .cal-weekdays span{ text-align:center; font-size:10px; color:var(--charcoal-soft); }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-day{ all:unset; box-sizing:border-box; display:flex; align-items:center; justify-content:center; aspect-ratio:1; border-radius:8px; font-size:12px; font-family:'Kanit', sans-serif; cursor:pointer; position:relative; }
+  .cal-blank{ visibility:hidden; }
+  .cal-day.work{ background:var(--card-blue-tint); border:1.5px solid var(--ice-blue-deep); color:var(--charcoal); }
+  .cal-day.leave{ background:var(--leave-blue-soft); border:1.5px solid var(--leave-blue); color:var(--leave-blue); font-weight:600; }
+  .cal-day.holiday{ background:var(--holiday-green-soft); border:1.5px solid var(--holiday-green); color:var(--holiday-green); font-weight:600; }
+  .cal-day.off{ background:transparent; color:var(--charcoal-soft); opacity:.45; cursor:default; }
+  .cal-day.before-start{ opacity:.22; cursor:default; }
+  .cal-day.today{ box-shadow:0 0 0 2px var(--orange); }
+  .cal-day:disabled{ cursor:default; }
+  .cal-legend{ display:flex; justify-content:center; gap:10px; margin-top:12px; font-size:9.5px; color:var(--charcoal-soft); flex-wrap:wrap; }
+  .cal-legend .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:3px; vertical-align:middle; }
+  .cal-legend .dot.work{ background:var(--ice-blue-deep); }
+  .cal-legend .dot.leave{ background:var(--leave-blue); }
+  .cal-legend .dot.holiday{ background:var(--holiday-green); }
+  .cal-legend .dot.off{ background:var(--charcoal-soft); }
+  .cal-note{ text-align:center; font-size:9px; color:var(--charcoal-soft); margin-top:10px; line-height:1.5; }
+  .modal-close{ display:block; margin:14px auto 0; background:var(--card-blue-tint); border:2px solid var(--ice-blue); border-radius:16px; padding:6px 22px; font-family:'Kanit', sans-serif; font-weight:500; font-size:12.5px; color:var(--charcoal); cursor:pointer; }
+
+  @media (max-width:380px){
+    .card{ padding:50px 18px 20px; }
+    .badge{ width:88px; height:88px; top:-40px; }
+    .lamp{ width:18px; height:18px; }
+    .week-row{ gap:9px; }
+  }
+</style>
+</head>
+<body class="phase-before">
+
+<div class="snowfall" aria-hidden="true">
+  <span class="flake" style="left:6%; font-size:14px; animation-duration:14s; animation-delay:0s;">❄</span>
+  <span class="flake" style="left:18%; font-size:10px; animation-duration:18s; animation-delay:2s;">❅</span>
+  <span class="flake" style="left:32%; font-size:16px; animation-duration:12s; animation-delay:5s;">❄</span>
+  <span class="flake" style="left:50%; font-size:11px; animation-duration:16s; animation-delay:1s;">❅</span>
+  <span class="flake" style="left:68%; font-size:13px; animation-duration:15s; animation-delay:4s;">❄</span>
+  <span class="flake" style="left:80%; font-size:10px; animation-duration:19s; animation-delay:7s;">❅</span>
+  <span class="flake" style="left:92%; font-size:15px; animation-duration:13s; animation-delay:3s;">❄</span>
+</div>
+
+<div class="wrap">
+  <div class="badge" aria-hidden="true">
+    <svg viewBox="0 0 140 140" width="100%" height="100%">
+      <circle cx="70" cy="70" r="64" fill="#EAF6FB" stroke="#BFE6F2" stroke-width="4"/>
+      <circle cx="40" cy="44" r="14" fill="#FFFFFF" stroke="#BFE6F2" stroke-width="3"/>
+      <circle cx="100" cy="44" r="14" fill="#FFFFFF" stroke="#BFE6F2" stroke-width="3"/>
+      <circle cx="40" cy="46" r="6" fill="#F4D9C6" opacity="0.6"/>
+      <circle cx="100" cy="46" r="6" fill="#F4D9C6" opacity="0.6"/>
+
+      <!-- เสื้อลายทางขาว-เทาที่แอบโผล่ใต้คาง -->
+      <defs>
+        <clipPath id="collarClip">
+          <path d="M28,136 Q28,110 70,110 Q112,110 112,136 Z"/>
+        </clipPath>
+      </defs>
+      <g clip-path="url(#collarClip)">
+        <rect x="20" y="105" width="100" height="40" fill="#FFFFFF"/>
+        <rect x="20" y="111" width="100" height="6" fill="#C7D2D6"/>
+        <rect x="20" y="122" width="100" height="6" fill="#C7D2D6"/>
+        <rect x="20" y="133" width="100" height="6" fill="#C7D2D6"/>
+      </g>
+      <path d="M28,136 Q28,110 70,110 Q112,110 112,136 Z" fill="none" stroke="#BFE6F2" stroke-width="2.5"/>
+
+      <!-- หัว -->
+      <circle cx="70" cy="76" r="40" fill="#FFFFFF" stroke="#BFE6F2" stroke-width="3"/>
+
+      <!-- หมวกวิศวกรไฟฟ้า -->
+      <path d="M40,48 Q70,18 100,48 L100,53 Q70,36 40,53 Z" fill="#FF9F40"/>
+      <rect x="34" y="48" width="72" height="9" rx="4.5" fill="#FF9F40"/>
+      <circle cx="70" cy="31" r="3.4" fill="#FFD9A8"/>
+
+      <!-- ปาก/จมูก -->
+      <ellipse cx="70" cy="90" rx="22" ry="17" fill="#FFFFFF" stroke="#BFE6F2" stroke-width="2.5"/>
+      <circle cx="50" cy="88" r="7" fill="#FFC9B0" opacity="0.55"/>
+      <circle cx="90" cy="88" r="7" fill="#FFC9B0" opacity="0.55"/>
+
+      <!-- ตาหลับสบายๆ -->
+      <path d="M51,74 Q58,69 65,74" stroke="#3A4750" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M75,74 Q82,69 89,74" stroke="#3A4750" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+
+      <ellipse cx="70" cy="88" rx="5.5" ry="4" fill="#3A4750"/>
+      <path d="M70,92 Q70,96 65,97" stroke="#3A4750" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M70,92 Q70,96 75,97" stroke="#3A4750" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+      <path d="M122,90 L114,104 L120,104 L112,118 L126,100 L120,100 Z" fill="#FF9F40" stroke="#FFFFFF" stroke-width="2"/>
+    </svg>
+  </div>
+  <span class="snow-deco s1" aria-hidden="true">❄</span>
+  <span class="snow-deco s2" aria-hidden="true">❅</span>
+  <span class="snow-deco s3" aria-hidden="true">❄</span>
+
+  <div class="card" role="timer" aria-label="ตัวจับเวลาถอยหลังเลิกงาน ของด็อบบี้หมีขั้วโลกวิศวกรไฟฟ้า">
+    <p class="eyebrow">ด็อบบี้ วิศวกรหมีขั้วโลก ⚡ จันทร์–ศุกร์ 09:00–18:00</p>
+    <p class="date-line" id="dateLine">กำลังโหลดวันที่…</p>
+
+    <div class="meter">
+      <span class="meter-text">ทำงานมาแล้ว</span>
+      <span class="meter-box" id="dayCounter">0000</span>
+      <span class="meter-text">วัน</span>
+    </div>
+
+    <div class="cal-open-row">
+      <button type="button" class="cal-open-btn" id="calOpenBtn">📅 ดูปฎิทินย้อนหลัง</button>
+    </div>
+
+    <h1 class="phase-title" id="phaseTitle">กำลังตรวจสอบเวลา…</h1>
+
+    <div class="readout" aria-hidden="true">
+      <span class="seg" id="hh">00</span><span class="colon">:</span>
+      <span class="seg" id="mm">00</span><span class="colon">:</span>
+      <span class="seg" id="ss">00</span>
+    </div>
+    <div class="unit-labels">
+      <span>ชั่วโมง</span><span class="sp"></span><span>นาที</span><span class="sp"></span><span>วินาที</span>
+    </div>
+
+    <p class="target-line" id="targetLine">กำลังโหลด…</p>
+
+    <div class="lamp-section">
+      <p class="lamp-caption" id="lampCaption">ชั่วโมงทำงานวันนี้</p>
+      <div class="lamp-row" id="lampRow"></div>
+    </div>
+
+    <div class="week-section">
+      <div class="week-row" id="weekRow"></div>
+    </div>
+
+    <div class="leave-section">
+      <div class="quick-btn-row">
+        <button type="button" class="quick-btn" id="leaveBtn" aria-pressed="false">🐾 ลาวันนี้</button>
+        <button type="button" class="quick-btn" id="holidayBtn" aria-pressed="false">🎉 หยุดวันนี้</button>
+      </div>
+      <p class="leave-hint">ลา = วันลาส่วนตัว · หยุด = วันหยุดราชการ/บริษัท ทั้งสองแบบนับเหมือนวันหยุดและไม่รวมในวันทำงานสะสม กดได้ทั้งวันนี้หรือไปแก้ย้อนหลัง/ล่วงหน้าในปฎิทินก็ได้</p>
+      <p class="leave-hint" id="syncStatus">กำลังเชื่อมต่อ…</p>
+    </div>
+
+    <div class="status-row">
+      <div class="switch-group">
+        <span class="switch" id="switchEl"><span class="knob"></span></span>
+        <span class="status-text" id="statusText">—</span>
+      </div>
+      <span class="clock" id="clockNow">00:00:00</span>
+    </div>
+  </div>
+
+  <p class="sr-only" id="srStatus" aria-live="polite"></p>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="ปฎิทินวันทำงาน วันลา และวันหยุด">
+    <div class="modal-header">
+      <button class="nav-btn" id="prevMonth" aria-label="เดือนก่อนหน้า">‹</button>
+      <span class="modal-title" id="calTitle">—</span>
+      <button class="nav-btn" id="nextMonth" aria-label="เดือนถัดไป">›</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span><i class="dot work"></i>ทำงาน</span>
+      <span><i class="dot leave"></i>ลา</span>
+      <span><i class="dot holiday"></i>หยุด</span>
+      <span><i class="dot off"></i>เสาร์-อาทิตย์</span>
+    </div>
+    <p class="cal-note">แตะวันที่เป็นวันทำงาน เพื่อสลับสถานะ: ทำงาน → ลา → หยุด → ทำงาน</p>
+    <button class="modal-close" id="modalClose">ปิด</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+(function(){
+  var WORK_START_H = 9, WORK_END_H = 18;
+  var TOTAL_LAMPS = WORK_END_H - WORK_START_H;
+  var DAY_LABELS = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  var START_DATE = new Date(2026, 5, 8);
+  var EXTRA_WORK_DATES = ['2026-06-13'];
+  var STORAGE_KEY = 'polarBearTimer_dayStatus_v2';
+
+  // *** แก้ค่าด้านล่างนี้เป็น config จาก Firebase ของคุณ ***
+  var firebaseConfig = {
+    apiKey: "ใส่ของคุณที่นี่",
+    authDomain: "ใส่ของคุณที่นี่",
+    databaseURL: "ใส่ของคุณที่นี่",
+    projectId: "ใส่ของคุณที่นี่",
+    storageBucket: "ใส่ของคุณที่นี่",
+    messagingSenderId: "ใส่ของคุณที่นี่",
+    appId: "ใส่ของคุณที่นี่"
+  };
+
+  function pad(n){ return String(n).padStart(2, '0'); }
+  function pad4(n){ return String(n).padStart(4, '0'); }
+  function isWeekday(date){ var dd = date.getDay(); return dd >= 1 && dd <= 5; }
+  function isoDate(date){ return date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()); }
+  function isExtraWorkDate(date){ return EXTRA_WORK_DATES.indexOf(isoDate(date)) !== -1; }
+  function isWorkDate(date){ return isWeekday(date) || isExtraWorkDate(date); }
+  function midnight(date){ var d = new Date(date); d.setHours(0,0,0,0); return d; }
+
+  // dayStatusMap: Map<isoDate, 'leave'|'holiday'>
+  function loadLocalStatusMap(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      var obj = raw ? JSON.parse(raw) : {};
+      if (typeof obj !== 'object' || obj === null) obj = {};
+      return new Map(Object.entries(obj));
+    } catch(e){ return new Map(); }
+  }
+  function saveLocalStatusMap(){
+    try{
+      var obj = {};
+      dayStatusMap.forEach(function(v,k){ obj[k] = v; });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    } catch(e){ /* localStorage ใช้ไม่ได้ในบางสภาพแวดล้อม เช่น ดูตัวอย่างในแชท */ }
+  }
+
+  var dayStatusMap = loadLocalStatusMap();
+  var useFirebase = false;
+  var dbRef = null;
+  var syncStatusEl = document.getElementById('syncStatus');
+  var configIsFilled = firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('ใส่ของคุณ') === -1;
+
+  if (configIsFilled){
+    try{
+      firebase.initializeApp(firebaseConfig);
+      dbRef = firebase.database().ref('leaveDates');
+      useFirebase = true;
+      if (syncStatusEl) syncStatusEl.textContent = '☁️ เชื่อมคลาวด์แล้ว ข้อมูลซิงค์กับทุกเครื่อง';
+      dbRef.on('value', function(snapshot){
+        var val = snapshot.val() || {};
+        dayStatusMap = new Map(Object.entries(val));
+        saveLocalStatusMap();
+        render();
+        if (els.modalOverlay && !els.modalOverlay.hidden) renderCalendar();
+      }, function(err){
+        if (syncStatusEl) syncStatusEl.textContent = '⚠️ เชื่อมคลาวด์ไม่สำเร็จ ใช้ข้อมูลในเครื่องนี้แทน';
+      });
+    } catch(e){
+      useFirebase = false;
+      if (syncStatusEl) syncStatusEl.textContent = '⚠️ ตั้งค่าคลาวด์ไม่ถูกต้อง ใช้ข้อมูลในเครื่องนี้แทน';
+    }
+  } else {
+    if (syncStatusEl) syncStatusEl.textContent = '📴 ยังไม่ตั้งค่าคลาวด์ (บันทึกแค่ในเครื่องนี้)';
+  }
+
+  function dayStatus(date){ return dayStatusMap.get(isoDate(date)) || null; }
+  function setDayStatus(date, status){
+    var iso = isoDate(date);
+    if (status) dayStatusMap.set(iso, status); else dayStatusMap.delete(iso);
+    saveLocalStatusMap();
+    if (useFirebase && dbRef){ dbRef.child(iso).set(status || null); }
+  }
+  function cycleStatus(date){
+    var cur = dayStatus(date);
+    var next = cur === null ? 'leave' : (cur === 'leave' ? 'holiday' : null);
+    setDayStatus(date, next);
+  }
+
+  var els = {
+    body: document.body,
+    title: document.getElementById('phaseTitle'),
+    hh: document.getElementById('hh'), mm: document.getElementById('mm'), ss: document.getElementById('ss'),
+    target: document.getElementById('targetLine'),
+    lampRow: document.getElementById('lampRow'), lampCaption: document.getElementById('lampCaption'),
+    weekRow: document.getElementById('weekRow'),
+    switchEl: document.getElementById('switchEl'), statusText: document.getElementById('statusText'),
+    clockNow: document.getElementById('clockNow'), dateLine: document.getElementById('dateLine'),
+    dayCounter: document.getElementById('dayCounter'),
+    leaveBtn: document.getElementById('leaveBtn'), holidayBtn: document.getElementById('holidayBtn'),
+    srStatus: document.getElementById('srStatus'),
+    calOpenBtn: document.getElementById('calOpenBtn'), modalOverlay: document.getElementById('modalOverlay'),
+    modalClose: document.getElementById('modalClose'), prevMonth: document.getElementById('prevMonth'),
+    nextMonth: document.getElementById('nextMonth'), calTitle: document.getElementById('calTitle'),
+    calGrid: document.getElementById('calGrid')
+  };
+
+  var lampGlows = [];
+  for (var i = 0; i < TOTAL_LAMPS; i++){
+    var col = document.createElement('div'); col.className = 'lamp-col';
+    var lamp = document.createElement('div'); lamp.className = 'lamp';
+    var glow = document.createElement('div'); glow.className = 'lamp-glow';
+    lamp.appendChild(glow); lampGlows.push({lamp: lamp, glow: glow});
+    var num = document.createElement('div'); num.className = 'lamp-num'; num.textContent = WORK_START_H + i;
+    col.appendChild(lamp); col.appendChild(num); els.lampRow.appendChild(col);
+  }
+
+  var weekLamps = [];
+  for (var d = 1; d <= 5; d++){
+    var wcol = document.createElement('div'); wcol.className = 'week-col';
+    var wlamp = document.createElement('div'); wlamp.className = 'week-lamp';
+    var wlabel = document.createElement('div'); wlabel.className = 'week-label'; wlabel.textContent = DAY_LABELS[d];
+    weekLamps.push({day: d, lamp: wlamp, label: wlabel});
+    wcol.appendChild(wlamp); wcol.appendChild(wlabel); els.weekRow.appendChild(wcol);
+  }
+
+  function nextWorkStart(now, skipToday){
+    var dt = new Date(now); dt.setHours(WORK_START_H, 0, 0, 0);
+    if (dt <= now || skipToday){ dt.setDate(dt.getDate() + 1); dt.setHours(WORK_START_H, 0, 0, 0); }
+    while (!isWeekday(dt)){ dt.setDate(dt.getDate() + 1); }
+    return dt;
+  }
+
+  function countWorkDays(now){
+    var start = midnight(START_DATE), today = midnight(now);
+    if (today < start) return 0;
+    var count = 0, cursor = new Date(start), guard = 0;
+    while (cursor.getTime() <= today.getTime() && guard < 3650){
+      guard++;
+      if (isWorkDate(cursor) && !dayStatus(cursor)) count++;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return count;
+  }
+
+  function afterToggle(){
+    render();
+    if (!els.modalOverlay.hidden) renderCalendar();
+  }
+  els.leaveBtn.addEventListener('click', function(){
+    var cur = dayStatus(new Date());
+    setDayStatus(new Date(), cur === 'leave' ? null : 'leave');
+    afterToggle();
+  });
+  els.holidayBtn.addEventListener('click', function(){
+    var cur = dayStatus(new Date());
+    setDayStatus(new Date(), cur === 'holiday' ? null : 'holiday');
+    afterToggle();
+  });
+
+  /* ---------- calendar ---------- */
+  var calYear, calMonth;
+
+  function openCalendar(){
+    var now = new Date();
+    calYear = now.getFullYear(); calMonth = now.getMonth();
+    renderCalendar();
+    els.modalOverlay.hidden = false;
+  }
+  function closeCalendar(){ els.modalOverlay.hidden = true; }
+
+  function renderCalendar(){
+    var first = new Date(calYear, calMonth, 1);
+    els.calTitle.textContent = first.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+
+    els.calGrid.innerHTML = '';
+    var startOffset = first.getDay();
+    var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    var today = midnight(new Date());
+    var startBound = midnight(START_DATE);
+
+    for (var b = 0; b < startOffset; b++){
+      var blank = document.createElement('span');
+      blank.className = 'cal-blank';
+      els.calGrid.appendChild(blank);
+    }
+
+    for (var day = 1; day <= daysInMonth; day++){
+      var date = new Date(calYear, calMonth, day);
+      var dMid = midnight(date);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cal-day';
+      btn.textContent = day;
+
+      if (dMid.getTime() === today.getTime()) btn.classList.add('today');
+
+      if (dMid < startBound){
+        btn.classList.add('before-start');
+        btn.disabled = true;
+      } else if (!isWorkDate(date)){
+        btn.classList.add('off');
+        btn.disabled = true;
+      } else {
+        var status = dayStatus(date);
+        if (status === 'leave'){ btn.classList.add('leave'); btn.title = 'ลา (แตะเพื่อเปลี่ยน)'; }
+        else if (status === 'holiday'){ btn.classList.add('holiday'); btn.title = 'หยุด (แตะเพื่อเปลี่ยน)'; }
+        else { btn.classList.add('work'); btn.title = 'ทำงาน (แตะเพื่อแจ้งลา/หยุด)'; }
+        btn.addEventListener('click', function(dt){ return function(){
+          cycleStatus(dt); renderCalendar(); render();
+        }; }(date));
+      }
+
+      els.calGrid.appendChild(btn);
+    }
+  }
+
+  els.calOpenBtn.addEventListener('click', openCalendar);
+  els.modalClose.addEventListener('click', closeCalendar);
+  els.modalOverlay.addEventListener('click', function(e){ if (e.target === els.modalOverlay) closeCalendar(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !els.modalOverlay.hidden) closeCalendar(); });
+  els.prevMonth.addEventListener('click', function(){ calMonth--; if (calMonth < 0){ calMonth = 11; calYear--; } renderCalendar(); });
+  els.nextMonth.addEventListener('click', function(){ calMonth++; if (calMonth > 11){ calMonth = 0; calYear++; } renderCalendar(); });
+
+  /* ---------- main render ---------- */
+  var lastSrPhase = null;
+
+  function render(){
+    var now = new Date();
+    var todayIsWeekday = isWeekday(now);
+    var status = todayIsWeekday ? dayStatus(now) : null;
+    var onLeave = status === 'leave';
+    var onHoliday = status === 'holiday';
+    var notWorkingToday = onLeave || onHoliday;
+
+    var start = new Date(now); start.setHours(WORK_START_H,0,0,0);
+    var end = new Date(now); end.setHours(WORK_END_H,0,0,0);
+
+    var isWorking = todayIsWeekday && !notWorkingToday && now >= start && now < end;
+    var phase, diffMs, target;
+
+    if (isWorking){
+      phase = 'working'; diffMs = end - now; target = 'จนถึงเวลาเลิกงาน 18:00 น.';
+    } else {
+      var nextStart = nextWorkStart(now, notWorkingToday);
+      diffMs = nextStart - now;
+      var isTargetToday = nextStart.toDateString() === now.toDateString();
+
+      if (!todayIsWeekday) phase = 'weekend';
+      else if (onLeave) phase = 'leave';
+      else if (onHoliday) phase = 'holiday';
+      else if (now < start) phase = 'before';
+      else phase = 'after';
+
+      if (isTargetToday){
+        target = 'จนถึงเวลาเข้างาน 09:00 น.';
+      } else {
+        var wd = nextStart.toLocaleDateString('th-TH', { weekday: 'long' });
+        target = 'จนถึงเวลาเข้างาน ' + wd + ' 09:00 น.';
+      }
+    }
+
+    els.body.classList.remove('phase-before','phase-working','phase-after','phase-weekend','phase-leave','phase-holiday');
+    els.body.classList.add('phase-' + phase);
+
+    var totalSec = Math.max(0, Math.floor(diffMs / 1000));
+    var h = Math.floor(totalSec / 3600), m = Math.floor((totalSec % 3600) / 60), s = totalSec % 60;
+    els.hh.textContent = pad(h); els.mm.textContent = pad(m); els.ss.textContent = pad(s);
+
+    var titleMap = {
+      working: 'เหลือเวลาอีก', before: 'ยังไม่เริ่มงาน', after: 'เลิกงานแล้ว! 🐟',
+      weekend: 'วันหยุดสุดสัปดาห์ ❄️', leave: 'ด็อบบี้ขอลาวันนี้ 💤', holiday: 'ด็อบบี้ขอหยุดวันนี้ 🎉'
+    };
+    els.title.textContent = titleMap[phase];
+    els.target.textContent = target;
+
+    if (onLeave) els.lampCaption.textContent = 'ลาวันนี้ ไม่มีชั่วโมงทำงาน';
+    else if (onHoliday) els.lampCaption.textContent = 'วันหยุด ไม่มีชั่วโมงทำงาน';
+    else if (!todayIsWeekday) els.lampCaption.textContent = 'ไม่มีเวลาทำงานวันนี้';
+    else els.lampCaption.textContent = 'ชั่วโมงทำงานวันนี้';
+
+    for (var i = 0; i < TOTAL_LAMPS; i++){
+      var slotStart = new Date(start.getTime() + i * 3600000);
+      var slotEnd = new Date(slotStart.getTime() + 3600000);
+      var pct, active = false;
+      if (!todayIsWeekday || notWorkingToday || phase === 'before'){ pct = 0; }
+      else if (phase === 'after'){ pct = 1; }
+      else if (now >= slotEnd){ pct = 1; }
+      else if (now <= slotStart){ pct = 0; }
+      else { pct = (now - slotStart) / 3600000; active = true; }
+      lampGlows[i].glow.style.height = (pct * 100) + '%';
+      lampGlows[i].lamp.classList.toggle('is-active', active);
+    }
+
+    var todayNum = now.getDay();
+    weekLamps.forEach(function(wl){
+      var isToday = wl.day === todayNum;
+      wl.lamp.classList.toggle('today', isToday);
+      wl.label.classList.toggle('today-label', isToday);
+    });
+
+    els.switchEl.classList.toggle('on', phase === 'working');
+    var statusMap = {
+      working: 'กำลังทำงานอยู่', before: 'ยังไม่เปิดสวิตช์', after: 'ปิดสวิตช์แล้ว',
+      weekend: 'หยุดทำการ', leave: 'ด็อบบี้งีบอยู่', holiday: 'วันหยุดราชการ/บริษัท'
+    };
+    els.statusText.textContent = statusMap[phase];
+
+    els.leaveBtn.disabled = !todayIsWeekday;
+    els.holidayBtn.disabled = !todayIsWeekday;
+    els.leaveBtn.classList.toggle('active-leave', onLeave);
+    els.holidayBtn.classList.toggle('active-holiday', onHoliday);
+    els.leaveBtn.setAttribute('aria-pressed', String(onLeave));
+    els.holidayBtn.setAttribute('aria-pressed', String(onHoliday));
+
+    els.dayCounter.textContent = pad4(countWorkDays(now));
+
+    els.clockNow.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    els.dateLine.textContent = '❄ ' + now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    if (phase !== lastSrPhase){
+      lastSrPhase = phase;
+      els.srStatus.textContent = titleMap[phase] + ' ' + target;
+    }
+  }
+
+  render();
+  setInterval(render, 1000);
+})();
+</script>
+
+</body>
+</html>
